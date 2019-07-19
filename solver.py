@@ -48,48 +48,92 @@ def solve_it(input_data):
                 all_connections[i].connected_edges.append(edges[j][0])
 
     # Print to see if the nodes are properly assigned
-    for i in range(len(all_connections)):
-        print(all_connections[i].connected_edges)
+    # for i in range(len(all_connections)):
+    #    print(all_connections[i].connected_edges)
 
     # Second column will contain the count of each node.
     for i in range(0, edge_count):
         all_edges_from_one_node[edges[i][0]][1] = all_edges_from_one_node[edges[i][0]][1] + 1
         all_edges_from_one_node[edges[i][1]][1] = all_edges_from_one_node[edges[i][1]][1] + 1
 
+    # print(all_edges_from_one_node)
     # Sort the originating nodes based on the increasing complexity. We use fail-first.
     # Assign the color to the node which has largest edges originating from itself.
-    all_edges_from_one_node.sort(key=operator.itemgetter(1), reverse=True)
+    all_edges_from_one_node_sorted = sorted(all_edges_from_one_node, key=operator.itemgetter(1), reverse=True)
+    all_edges_from_one_node_sorted = sorted(all_edges_from_one_node, key=operator.itemgetter(0), reverse=True)
 
+    print(all_edges_from_one_node_sorted)
+    print("not sorted")
     print(all_edges_from_one_node)
 
-    # Contains the colors from 0 to node_count
-    all_colors = [[0]*2 for _ in range(node_count)]
+    # Contains the colors from 0 to node_count. Already assigned colors
+    # all_colors = [[0]*2 for _ in range(node_count)]
+    all_colors = [0]*node_count
+
+    for i in range(len(all_colors)):
+        all_colors[i] = i
 
     # print(all_colors)
 
     # Start assigning the colors to nodes.
-    all_colors_filled=0
-    while all_colors_filled==0:
-        for i in range(len(all_edges_from_one_node)):
-            if all_edges_from_one_node[i][2] == -1:
-                all_edges_from_one_node[i][2] = get_color(all_colors)
+    all_colors_filled = 0
+    i = 0
+    while all_colors_filled == 0:
+        if i <= len(all_edges_from_one_node_sorted):
+            if i == len(all_edges_from_one_node_sorted):
+                feasibility = check_feasible(all_edges_from_one_node, all_connections)
+                if feasibility:
+                    all_colors_filled = 1
+                else:
+                    i = 0
+            else:
+                if all_edges_from_one_node_sorted[i][2] == -1:
+                    #all_colors = get_all_colors_for_this_node(all_colors, all_edges_from_one_node_sorted, all_connections)
+                    for m in range(len(all_colors)):
+                        # if all_colors[m][1] == 0:
+                        all_edges_from_one_node_sorted[i][2] = all_colors[m]
+                        feasibility = check_feasible(all_edges_from_one_node, all_connections)
+                        if feasibility:
+                            i = i + 1
+                            break
+        #print(all_edges_from_one_node_sorted)
 
-            all_colors_filled = 1
+    print(all_edges_from_one_node)
+    solution = []
+    for i in range(len(all_edges_from_one_node)):
+        solution.append(all_edges_from_one_node[i][2])
 
-    solution = 0
+    objective_value = max(solution) + 1
+
+    #while all_colors_filled == 0:
+
+
     # prepare the solution in the specified output format
-    output_data = str(node_count) + ' ' + str(0) + '\n'
-    # output_data += ' '.join(map(str, solution))
+    output_data = str(objective_value) + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, solution))
 
     return output_data
 
-def check_feasible(all_edges_from_one_node):
-    return 0
 
-def get_color(all_colors):
-    for i in range(len(all_colors)):
+def check_feasible(all_edges_from_one_node, all_connections):
+    feasible = True
+    for i in range(len(all_edges_from_one_node)):
+        if feasible:
+            # Take the current node to compare the colors of its color and all its connected nodes.
+            current_node = all_edges_from_one_node[i]
+            connected_edges_to_this_node = all_connections[current_node[0]].connected_edges
+            # Iterate through the connected lists and compare the color. Not feasible if connections have same color.
+            for c in range(len(connected_edges_to_this_node)):
+                if current_node[2] == all_edges_from_one_node[connected_edges_to_this_node[c]][2] and current_node[2] \
+                        != -1:
+                    feasible = False
+                    break
+        else:
+            break
 
-        return 0
+    #print(feasible)
+    return feasible
+
 
 if __name__ == '__main__':
     import sys
